@@ -1,8 +1,8 @@
 html {
     scroll-behavior: smooth;
     font-size: medium;
-    background-color: #111111;
-    color: #adff2f;
+    background-color: #282C34;
+    color: #98C379;
     font-family: "Fira Mono", monospace;
 }
 
@@ -14,7 +14,7 @@ html {
     outline: 0; /* Remove the outline */
     background-color: inherit;
     font-size: inherit;
-    color: #adff2f;
+    color: #98C379;
     margin-bottom: 15px;
     margin-left: 0px;
     padding-left: 0px;
@@ -28,3 +28,6 @@ html {
     outline: none!important;
 }
 
+.output {
+    white-space: pre-wrap;
+}
