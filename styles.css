@@ -1,0 +1,30 @@
+html {
+    scroll-behavior: smooth;
+    font-size: medium;
+    background-color: #111111;
+    color: #adff2f;
+    font-family: "Fira Mono", monospace;
+}
+
+.input {
+    margin: 0; /* Remove any margin */
+    border: 0; /* Remove the border */
+    border-width: 0;
+    width: 91%;
+    outline: 0; /* Remove the outline */
+    background-color: inherit;
+    font-size: inherit;
+    color: #adff2f;
+    margin-bottom: 15px;
+    margin-left: 0px;
+    padding-left: 0px;
+    margin-top: 0px;
+    padding-top: 0px;
+    font-family: inherit;
+    text-shadow: inherit;
+}
+
+.input:focus {
+    outline: none!important;
+}
+
