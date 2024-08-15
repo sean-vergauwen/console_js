@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
+    
     const inputField = document.getElementById('input');
     const outputDiv = document.getElementById('output');
     
+    // One half dark color palette
     const red = "#E06C75";
     const green = "#98C379";
     const white = "#DCDFE4";
@@ -9,35 +11,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const blue = "#61AFEF";
     const purple = "#C678DD";
     const cyan = "#56B6C2";
+    const black = "#282C34";
+
+    let commandHistory = [];
+    let historyIndex = 0;
 
     String.prototype.removeExtraSpaces = function() {
         return this.replace(/\s+/g,' ').trim();
     }
-    // Array to store the history of commands
-    let commandHistory = [];
-    let historyIndex = 0;
 
-    // Function to process the input command
     function processCommand(command) {
-        // Add the command to the output
+        // Display the command in the output div
         addOutput(`> ${command}`, green);
-        console.log(command)
+        
+        // Cleans the query
         let array = command.removeExtraSpaces().split(" ")
-        console.log(array);
+        
         // Store the command in the history
         commandHistory.push(command);
         historyIndex = commandHistory.length;
 
         // Simple commands processing (you can extend this)
-        if (command === 'help') {
+        if (array[0] === 'help') {
             addOutput("Available commands :");
             addOutput("help     -> Show all commands", blue)
             addOutput("clear    -> Clear terminal", cyan)
             addOutput("about    -> Creator", blue)
 
-        } else if (command === 'clear') {
+        } else if (array[0] === 'clear') {
             outputDiv.innerHTML = '';
-        } else if (command === 'about') {
+        } else if (array[0] === 'about') {
             addOutput('Interactive Console made by Sean Vergauwen');
         } else {
             addOutput(`Unknown command: ${command}`, red);
