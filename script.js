@@ -49,32 +49,48 @@ class Directory extends Node {
         this.children.push(node);
     }
 
-    // Method to find a directory by name and track the path
-    findDirectory(targetPath) {
-        if (this.path === targetPath) {
-            return this;
-        }
-        
-        for (let child of this.children) {
-            if (child instanceof Directory) {
-                let result = child.findDirectory(targetPath)
-                if (result) {
-                    return result;
+    // Method to find a directory by name
+    findDirectory(targetName, root) {
+        targetName = targetName.split("/");
+        console.log(targetName);
+
+        if (targetName.length == 1) {
+            // first search thru current directory
+            for (let child of this.children) {
+                if (child instanceof Directory) {
+                    if (child.name == targetName[0]) {
+                        return child;
+                    } 
                 }
             }
+
+            return root;
+
+        } else if (targetName[0] == "root") {
+            let currentDir = root;
+            for (let i=0;  i < targetName.length; i++) {
+                for (let child of currentDir.children) {
+                    if (child instanceof Directory) {
+                        if (child.name == targetName[i+1]) {
+                            currentDir = child;
+                        } 
+                    }
+                }
+            }
+            return currentDir;
         }
 
-        return(`${name}/ is not found.`)
+        return(`${targetName} is not found.`);
     }
 
     // Display the contents of the directory with full path
     displayChildrenWithPath(dir) {
-        if (this.children.length === 0) {
+        if (dir.children.length === 0) {
             return [`${dir.name}/ is empty.`];
         } else {
-            let arr = []
+            let arr = [];
             dir.children.forEach(child => arr.push(child.display()));
-            return arr
+            return arr;
         }
     }
 
@@ -106,10 +122,6 @@ class Directory extends Node {
             console.log(`File "${fileName}" not found in ${this.name}.`);
         }
     }
-    
-    findParentDirectory(targetDirName) {
-        return "0";
-    }
 }
 
 
@@ -129,27 +141,24 @@ document.addEventListener('DOMContentLoaded', function() {
     String.prototype.removeExtraSpaces = function() {
         return this.replace(/\s+/g,' ').trim();
     }
-    // Array to store the history of commands
+
     let commandHistory = [];
     let historyIndex = 0;
 
     let root = new Directory('root');
     root.setPath("");
-    let workingDirectory = root
+    let workingDirectory = root;
 
     workingdirDiv.innerHTML = `${workingDirectory.name}/ $`;
 
     // Function to process the input command
     function processCommand(command) {
         // Add the command to the output
-        if (workingDirectory.name == "root") { 
-            addOutput(`${workingDirectory.name}/ $ ${command}`, green);
-        } else {
-            addOutput(`${workingDirectory.path}/ $ ${command}`, green);
-        }
-        console.log(command)
+    
+        addOutput(`${workingDirectory.path}/ $ ${command}`, green);
+        
         let array = command.removeExtraSpaces().split(" ")
-        // Store the command in the history
+    
         commandHistory.push(command);
         historyIndex = commandHistory.length;
 
@@ -179,8 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (array[0] === 'ls') {
             let arr = workingDirectory.displayChildrenWithPath(workingDirectory);
             for (let i = 0; i < arr.length; i++){
-                addOutput(arr[i])
+                addOutput(arr[i]);
             }
+
         } else if (array[0] === 'mkdir') {
             if (array[1]) {
                 addOutput(workingDirectory.add(new Directory(array[1])), yellow);
@@ -198,25 +208,25 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (array[0] === 'cd') {
             if (array[1]) {
                 if (array[1] == "..") {
-                    let parentDir = root.findDirectory(workingDirectory);
-                    if (parentDir) {
-                        console.log(`Parent directory of 'non-existing-dir' is: ${parentDir.name}`);
-                        workingDirectory = parentDir;
+                    let response = workingDirectory.findDirectory((workingDirectory.path).substring(0, (workingDirectory.path).length - (workingDirectory.name).length), root);
+                    if (typeof response === "string" || response instanceof String) {
+                        addOutput(response);
                     } else {
-                        console.log(`Parent directory of 'non-existing-dir' not found.`);
-                    }
-                } else {
-                    let check = workingDirectory.findDirectory(array[1]);
-                    console.log(check);
-                    if (typeof check === "string" || check instanceof String) {
-                        addOutput(check);
-                    } else {
-                        workingDirectory = check;
+                        workingDirectory = response;
                         workingdirDiv.innerHTML = `${workingDirectory.path}/ $`;
-                    }
+                    }   
+                } else {
+                    let response = workingDirectory.findDirectory(array[1], root);
+                    if (typeof response === "string" || response instanceof String) {
+                        addOutput(response);
+                    } else {
+                        workingDirectory = response;
+                        workingdirDiv.innerHTML = `${workingDirectory.path}/ $`;
+                    }   
                 }
             } else {
-                addOutput('Missing parameter', yellow);
+                workingDirectory = root;
+                workingdirDiv.innerHTML = `${workingDirectory.path}/ $`;
             }
 
         } else if (array[0] === 'save') {
@@ -224,6 +234,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } else if (array[0] === 'load') {
             addOutput('load');
+
+        } else if (array[0] === 'pwdparent') {
+            let parentDir = (workingDirectory.path).substring(0, (workingDirectory.path).length - (workingDirectory.name).length);
+            addOutput(`${parentDir}`);
 
         } else {
             addOutput(`Error: Unknown command: ${command}`, red);
@@ -237,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function addOutput(text, color=white) {
         const outputLine = document.createElement('div'); // Create a new div for each output line
         outputLine.textContent = text;
-        outputLine.style = `color: ${color}`
+        outputLine.style = `color: ${color}`;
         outputDiv.appendChild(outputLine); // Append the new div to the output area
         outputDiv.scrollTop = outputDiv.scrollHeight;
     }
@@ -251,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 processCommand(command);
                 inputField.value = '';
             } else {
-                addOutput(`${workingDirectory.path}/ $`, green)
+                addOutput(`${workingDirectory.path}/ $`, green);
                 inputField.value = '';
                 window.scrollTo(0, document.body.scrollHeight);
             }
@@ -273,6 +287,4 @@ document.addEventListener('DOMContentLoaded', function() {
     addOutput(` `);
     addOutput(`Type "help" to show all commands.`);
     addOutput(` `);
-    let result = root.findDirectory('root');
-    console.log(result)
 });
