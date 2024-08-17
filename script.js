@@ -10,7 +10,9 @@ class Node {
     }
     
     setPath(parentPath) {
-        this.path = parentPath + this.name;
+        if (parentPath != 0) {
+            this.path = parentPath + this.name;
+        }
     }
 }
 
@@ -50,28 +52,26 @@ class Directory extends Node {
     }
 
     // Method to find a directory by name
-    findDirectory(targetName, root) {
-        targetName = targetName.split("/");
-        console.log(targetName);
+    findDirectory(targetName, root, workingDirectory) {
+        let targetArr = targetName.split("/");
+        targetArr.unshift("/")
 
-        if (targetName.length == 1) {
+        if (targetArr.length === 2) {
             // first search thru current directory
-            for (let child of this.children) {
+            for (let child of workingDirectory.children) {
                 if (child instanceof Directory) {
-                    if (child.name == targetName[0]) {
+                    if (child.name === targetArr[1]) {
                         return child;
                     } 
                 }
             }
 
-            return root;
-
-        } else if (targetName[0] == "root") {
+        } else if (targetArr.length > 2) {
             let currentDir = root;
-            for (let i=0;  i < targetName.length; i++) {
+            for (let i=0;  i < targetArr.length; i++) {
                 for (let child of currentDir.children) {
                     if (child instanceof Directory) {
-                        if (child.name == targetName[i+1]) {
+                        if (child.name == targetArr[i+1]) {
                             currentDir = child;
                         } 
                     }
@@ -86,11 +86,9 @@ class Directory extends Node {
     // Display the contents of the directory with full path
     displayChildrenWithPath(dir) {
         if (dir.children.length === 0) {
-            return [`${dir.name}/ is empty.`];
+            return [`${dir.name} is empty.`];
         } else {
-            let arr = [];
-            dir.children.forEach(child => arr.push(child.display()));
-            return arr;
+            return dir.children;
         }
     }
 
@@ -129,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputField = document.getElementById('input');
     const outputDiv = document.getElementById('output');
     const workingdirDiv = document.getElementById('workingdir');
+    const userDiv = document.getElementById("user");
     
     const red = "#E06C75";
     const green = "#98C379";
@@ -145,115 +144,51 @@ document.addEventListener('DOMContentLoaded', function() {
     let commandHistory = [];
     let historyIndex = 0;
 
-    let root = new Directory('root');
-    root.setPath("");
+    let root = new Directory('/');
+    root.setPath(0);
     let workingDirectory = root;
 
-    workingdirDiv.innerHTML = `${workingDirectory.name}/ $`;
+    root.add(new Directory('bin'));
+    root.add(new Directory('boot'));
+    root.add(new Directory('etc'));
+    root.add(new Directory('usr'));
+    root.add(new Directory('var'));
+    root.add(new Directory('sbin'));
+    root.add(new Directory('tmp'));
+    root.add(new Directory('dev'));
+    root.add(new Directory('home'));
+    root.add(new Directory('lib'));
+    root.add(new Directory('mnt'));
+    root.add(new Directory('opt'));
+    root.add(new Directory('root'));
+    root.add(new Directory('srv'));
+    root.add(new Directory('media'));
+    root.add(new Directory('proc'));
 
-    // Function to process the input command
-    function processCommand(command) {
-        // Add the command to the output
-    
-        addOutput(`${workingDirectory.path}/ $ ${command}`, green);
-        
-        let array = command.removeExtraSpaces().split(" ")
-    
-        commandHistory.push(command);
-        historyIndex = commandHistory.length;
-
-        // Simple commands processing (you can extend this)
-        if (command === 'help') {
-            addOutput("Available commands :");
-            addOutput("help              -> Show all commands", blue)
-            addOutput("clear              -> Clear terminal", cyan)
-            addOutput("pwd               -> Print current directory", blue)
-            addOutput("ls                 -> Print all files and folders in current directory", cyan)
-            addOutput("mkdir 'arg'       -> Creates a folder in current directory", blue)
-            addOutput("touch 'arg.ext'    -> Creates a file in current directory", cyan)
-            addOutput("cd 'arg/'         -> Change working directory, put '..' in arg to go back to parent directory", blue)
-            addOutput("save               -> Save directories and files", cyan)
-            addOutput("load              -> Load a save file", blue) 
-            addOutput("about             -> Creator", cyan)
-
-        } else if (array[0] === 'clear') {
-            outputDiv.innerHTML = '';
-
-        } else if (array[0] === 'about') {
-            addOutput('Interactive Console made by Sean Vergauwen');
-
-        } else if (array[0] === 'pwd') {
-            addOutput(`${workingDirectory.path}/`);
-
-        } else if (array[0] === 'ls') {
-            let arr = workingDirectory.displayChildrenWithPath(workingDirectory);
-            for (let i = 0; i < arr.length; i++){
-                addOutput(arr[i]);
-            }
-
-        } else if (array[0] === 'mkdir') {
-            if (array[1]) {
-                addOutput(workingDirectory.add(new Directory(array[1])), yellow);
-            } else {
-                addOutput('Missing parameter', yellow);
-            }
-
-        } else if (array[0] === 'touch') {
-            if (array[1]) {
-                addOutput(workingDirectory.add(new File(array[1])), yellow);
-            } else {
-                addOutput('Missing parameter', yellow);
-            }
-
-        } else if (array[0] === 'cd') {
-            if (array[1]) {
-                if (array[1] == "..") {
-                    let response = workingDirectory.findDirectory((workingDirectory.path).substring(0, (workingDirectory.path).length - (workingDirectory.name).length), root);
-                    if (typeof response === "string" || response instanceof String) {
-                        addOutput(response);
-                    } else {
-                        workingDirectory = response;
-                        workingdirDiv.innerHTML = `${workingDirectory.path}/ $`;
-                    }   
-                } else {
-                    let response = workingDirectory.findDirectory(array[1], root);
-                    if (typeof response === "string" || response instanceof String) {
-                        addOutput(response);
-                    } else {
-                        workingDirectory = response;
-                        workingdirDiv.innerHTML = `${workingDirectory.path}/ $`;
-                    }   
-                }
-            } else {
-                workingDirectory = root;
-                workingdirDiv.innerHTML = `${workingDirectory.path}/ $`;
-            }
-
-        } else if (array[0] === 'save') {
-            addOutput('save');
-
-        } else if (array[0] === 'load') {
-            addOutput('load');
-
-        } else if (array[0] === 'pwdparent') {
-            let parentDir = (workingDirectory.path).substring(0, (workingDirectory.path).length - (workingDirectory.name).length);
-            addOutput(`${parentDir}`);
-
-        } else {
-            addOutput(`Error: Unknown command: ${command}`, red);
-
-        }
-
-        window.scrollTo(0, document.body.scrollHeight);
-    }
+    workingdirDiv.innerHTML = `${workingDirectory.name}`;
 
     // Function to add text to the output div
-    function addOutput(text, color=white) {
-        const outputLine = document.createElement('div'); // Create a new div for each output line
-        outputLine.textContent = text;
-        outputLine.style = `color: ${color}`;
-        outputDiv.appendChild(outputLine); // Append the new div to the output area
-        outputDiv.scrollTop = outputDiv.scrollHeight;
+    function addOutput(text, color=white, showUserandDir=false) {
+        if (showUserandDir === false) {
+            const outputLine = document.createElement('div'); // Create a new div for each output line
+            outputLine.textContent = text;
+            outputLine.style = `color: ${color}`;
+            outputDiv.appendChild(outputLine); // Append the new div to the output area
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        } else {
+            const outputLine = document.createElement('div'); // Create a new div for each output line
+            const userLine = document.createElement('span');
+
+            userLine.textContent = userDiv.innerHTML;
+            userLine.style = `color: ${green}`
+            console.log(userLine);
+            
+            outputLine.textContent = text;
+            
+
+            outputDiv.appendChild(outputLine); // Append the new div to the output area
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
     }
 
     // Event listener for the input field
@@ -261,14 +196,126 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.key === 'Enter') {
             const command = inputField.value;
             window.scrollTo(0, document.body.scrollHeight);
+            
             if (command) {
-                processCommand(command);
+                if (workingDirectory == root) {
+                    addOutput(`${userDiv.innerHTML}:${workingDirectory.name}$ ${command}`, green);
+                } else {
+                    addOutput(`${userDiv.innerHTML}:${workingDirectory.path}$ ${command}`, green);
+                }
+                
+                let array = command.removeExtraSpaces().split(" ")
+    
+                commandHistory.push(command);
+                historyIndex = commandHistory.length;
+
+                // Simple commands processing (you can extend this)
+                if (command === 'help') {
+                    addOutput("Available commands :");
+                    addOutput("help              -> Show all commands", blue)
+                    addOutput("clear              -> Clear terminal", cyan)
+                    addOutput("pwd               -> Print current directory", blue)
+                    addOutput("ls                 -> Print all files and folders in current directory", cyan)
+                    addOutput("mkdir 'arg'       -> Creates a folder in current directory", blue)
+                    addOutput("touch 'arg.ext'    -> Creates a file in current directory", cyan)
+                    addOutput("cd 'arg'         -> Change working directory, put '..' in arg to go back to parent directory", blue)
+                    addOutput("save               -> Save directories and files", cyan)
+                    addOutput("load              -> Load a save file", blue) 
+                    addOutput("about             -> Creator", cyan)
+
+                } else if (array[0] === 'clear') {
+                    outputDiv.innerHTML = '';
+
+                } else if (array[0] === 'about') {
+                    addOutput('Interactive Console made by Sean Vergauwen');
+
+                } else if (array[0] === 'pwd') {
+                    addOutput(`${workingDirectory.path}/`);
+
+                } else if (array[0] === 'ls') {
+                    let arr = workingDirectory.displayChildrenWithPath(workingDirectory);
+                    for (let i = 0; i < arr.length; i++){
+                        if (arr[i] instanceof Directory) {
+                            addOutput(arr[i].name, blue);
+                        } else if (arr[i] instanceof File) {
+                            addOutput(arr[i].name, white);
+                        }
+                    }
+
+                } else if (array[0] === 'mkdir') {
+                    if (array[1]) {
+                        addOutput(workingDirectory.add(new Directory(array[1].replace(/\//g, ""))), yellow);
+                    } else {
+                        addOutput('Missing parameter', yellow);
+                    }
+
+                } else if (array[0] === 'touch') {
+                    if (array[1]) {
+                        addOutput(workingDirectory.add(new File(array[1].replace(/\//g, ""))), yellow);
+                    } else {
+                        addOutput('Missing parameter', yellow);
+                    }
+
+                } else if (array[0] === 'cd') {
+                    if (array[1]) {
+                        if (array[1] == "..") {
+                            let response = workingDirectory.findDirectory((workingDirectory.path).substring(0, (workingDirectory.path).length - (workingDirectory.name).length), root, workingDirectory);
+                            if (typeof response === "string" || response instanceof String) {
+                                addOutput(response);
+                            } else {
+                                workingDirectory = response;
+                            }   
+                        } else {
+                            let response = workingDirectory.findDirectory(array[1], root, workingDirectory);
+                            console.log(response)
+                            if (typeof response === "string" || response instanceof String) {
+                                addOutput(response);
+                            } else {
+                                workingDirectory = response;
+                            }   
+                        }
+                    } else if (array.length == 1) {
+                        workingDirectory = root;
+                    }
+
+                } else if (array[0] === 'save') {
+                    addOutput('save');
+
+                } else if (array[0] === 'load') {
+                    addOutput('load');
+
+                } else if (array[0] === 'pwdparent') {
+                    let parentDir = (workingDirectory.path).substring(0, (workingDirectory.path).length - (workingDirectory.name).length);
+                    addOutput(`${parentDir}`);
+
+                } else {
+                    addOutput(`Error: Unknown command: ${command}`, red);
+
+                }
+
+                window.scrollTo(0, document.body.scrollHeight);
+                
+                if (workingDirectory == root) {
+                    //addOutput(`${workingDirectory.name} $`, green);
+                    workingdirDiv.innerHTML = `${workingDirectory.name}`;
+                } else {
+                    // addOutput(`${workingDirectory.path} $`, green);
+                    workingdirDiv.innerHTML = `${workingDirectory.path}`;
+                }
+                
                 inputField.value = '';
+            
             } else {
-                addOutput(`${workingDirectory.path}/ $`, green);
+                if (workingDirectory == root) {
+                    addOutput(`${userDiv.innerHTML}:${workingDirectory.name}$`, green);
+                } else {
+                    addOutput(`${userDiv.innerHTML}:${workingDirectory.path}$`, green);
+                }
+                    
                 inputField.value = '';
                 window.scrollTo(0, document.body.scrollHeight);
             }
+        
         } else if (event.key === 'ArrowUp') {
             if (historyIndex > 0) {
                 historyIndex--;
