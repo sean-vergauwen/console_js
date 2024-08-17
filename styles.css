@@ -14,21 +14,23 @@ html {
     scroll-behavior: smooth;
     font-size: medium;
     background-color: var(--black);
-    color: var(--green);
+    color: var(--white);
     font-family: "Fira Mono", monospace;
 }
 
+body {
+    margin: 0px;
+}
 
-/* Not proud of that*/
 .input {
     margin: 0;
     border: 0;
     border-width: 0;
-    width: 91%;
+    width: 77%;
     outline: 0;
-    background-color: var(--black);
+    background-color: #282C34;
     font-size: medium;
-    color: var(--green);
+    color: var(--white);
     margin-bottom: 15px;
     margin-left: 0px;
     padding-left: 0px;
@@ -43,4 +45,16 @@ html {
 
 .output {
     white-space: pre-wrap;
+}
+
+.console {
+    margin: 8px;
+}
+
+.workingdir {
+    color: var(--blue);
+}
+
+.user {
+    color: var(--green);
 }
